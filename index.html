@@ -36,6 +36,8 @@
             max-width: 450px;
             height: 100vh;
             background: #FFF9F9;
+            background-size: cover;
+            background-position: center;
             display: flex;
             flex-direction: column;
             box-shadow: 0 8px 24px rgba(255, 117, 151, 0.15);
@@ -54,22 +56,15 @@
             justify-content: center;
             align-items: center;
             gap: 4px;
+            z-index: 10;
         }
 
-        .app-title-cn {
-            font-weight: bold;
-            font-size: 1.05rem;
-            letter-spacing: 0.5px;
-        }
-
-        .app-title-th {
-            font-size: 0.85rem;
-            opacity: 0.9;
-        }
+        .app-title-cn { font-weight: bold; font-size: 1.05rem; letter-spacing: 0.5px; }
+        .app-title-th { font-size: 0.85rem; opacity: 0.9; }
 
         .noti-btn {
             position: absolute;
-            right: 10px;
+            left: 10px;
             top: 15px;
             background: rgba(255,255,255,0.25);
             border: none;
@@ -78,8 +73,19 @@
             border-radius: 10px;
             font-size: 0.65rem;
             cursor: pointer;
-            line-height: 1.2;
-            text-align: center;
+        }
+
+        .settings-btn {
+            position: absolute;
+            right: 10px;
+            top: 15px;
+            background: rgba(255,255,255,0.25);
+            border: none;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
         }
 
         /* 聊天對話區域 */
@@ -89,26 +95,43 @@
             padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px;
+            background: rgba(255, 249, 249, 0.2); /* 讓背景圖隱約透出來 */
         }
 
-        /* 對話氣泡 */
-        .msg-row { display: flex; flex-direction: column; width: 100%; }
-        .msg-row.mine { align-items: flex-end; }
-        .msg-row.yours { align-items: flex-start; }
+        /* 對話行結構 */
+        .msg-row { display: flex; width: 100%; gap: 8px; align-items: flex-start; }
+        .msg-row.mine { flex-direction: row-reverse; }
+        .msg-row.yours { flex-direction: row; }
+
+        /* 頭像樣式 */
+        .avatar-img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+
+        .msg-content-area { display: flex; flex-direction: column; max-width: 75%; }
+        .mine .msg-content-area { align-items: flex-end; }
+        .yours .msg-content-area { align-items: flex-start; }
 
         .sender-name {
-            font-size: 0.75rem;
-            color: #8a8a8a;
+            font-size: 0.72rem;
+            color: #777777;
             margin-bottom: 3px;
-            padding: 0 5px;
+            padding: 0 4px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 4px;
         }
 
         .msg-bubble {
-            padding: 12px 16px;
-            border-radius: 20px;
-            max-width: 78%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            padding: 11px 15px;
+            border-radius: 18px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
             font-size: 0.95rem;
             word-break: break-word;
         }
@@ -116,42 +139,21 @@
         .mine .msg-bubble {
             background: var(--bubble-me);
             color: white;
-            border-bottom-right-radius: 4px;
+            border-top-right-radius: 4px;
         }
 
         .yours .msg-bubble {
             background: var(--bubble-you);
             color: var(--text-dark);
-            border-bottom-left-radius: 4px;
+            border-top-left-radius: 4px;
             border: 1px solid #FFE4E9;
         }
 
-        /* 媒體內容 */
-        .media-content {
-            max-width: 100%;
-            border-radius: 12px;
-            margin-bottom: 5px;
-            display: block;
-        }
+        .media-content { max-width: 100%; border-radius: 12px; margin-bottom: 5px; display: block; }
 
-        /* 翻譯區塊細節 */
-        .trans-block {
-            font-size: 0.85rem;
-            margin-top: 6px;
-            padding-top: 6px;
-            border-top: 1px dashed rgba(255,255,255,0.4);
-        }
-        .yours .trans-block {
-            border-top: 1px dashed #FFE4E9;
-            color: #555555;
-        }
-
-        .check-trans {
-            font-size: 0.75rem;
-            opacity: 0.75;
-            margin-top: 4px;
-            display: block;
-        }
+        .trans-block { font-size: 0.85rem; margin-top: 6px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.4); }
+        .yours .trans-block { border-top: 1px dashed #FFE4E9; color: #555555; }
+        .check-trans { font-size: 0.72rem; opacity: 0.75; margin-top: 4px; display: block; }
 
         /* 輸入區域 */
         .input-container {
@@ -161,10 +163,10 @@
             align-items: center;
             gap: 8px;
             border-top: 1px solid #FFE4E9;
+            z-index: 10;
         }
 
-        /* 隱藏的原生 file input */
-        #fileInput { display: none; }
+        #fileInput, #bgInput, #avatarInput { display: none; }
 
         .media-btn {
             background: #FFF0F2;
@@ -189,7 +191,6 @@
             font-size: 0.95rem;
             background: #FFF9FA;
         }
-        #userInput:focus { border-color: var(--primary-color); background: white; }
 
         #sendBtn {
             background: var(--primary-color);
@@ -199,21 +200,60 @@
             height: 40px;
             border-radius: 50%;
             cursor: pointer;
-            font-weight: bold;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 1rem;
         }
+
+        /* 首次登入彈窗調優 */
+        .setup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 100;
+        }
+        .setup-box {
+            background: white; padding: 25px; border-radius: 24px; width: 85%; max-width: 340px;
+            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .setup-avatar-preview {
+            width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
+            margin: 12px auto; border: 3px solid var(--secondary-color); display: block;
+        }
+        .setup-input {
+            width: 100%; padding: 10px 15px; border: 1px solid #FFD0DA;
+            border-radius: 15px; margin-top: 10px; margin-bottom: 20px; text-align: center; outline: none;
+        }
+        .setup-btn {
+            background: var(--primary-color); color: white; border: none;
+            padding: 10px 24px; border-radius: 15px; font-weight: bold; cursor: pointer; width: 100%;
+        }
     </style>
 </head>
 <body>
 
-<div class="phone-container">
+<input type="file" id="bgInput" accept="image/*" onchange="handleBgUpload(this)">
+
+<div id="setupModal" class="setup-overlay" style="display: none;">
+    <div class="setup-box">
+        <h3 style="margin:0; color:var(--primary-color);">💕 設定個人檔案<br><span style="font-size:13px;font-weight:normal;color:#777;">ตั้งค่าโปรไฟล์</span></h3>
+        
+        <label for="avatarInput">
+            <img id="avatarPreview" src="https://cdn-icons-png.flaticon.com/512/3641/3641323.png" class="setup-avatar-preview">
+            <span style="font-size:11px; color:var(--primary-color); cursor:pointer;">📷 點擊上傳頭像 / ใส่รูปโปรไฟล์</span>
+        </label>
+        <input type="file" id="avatarInput" accept="image/*" onchange="previewAvatar(this)">
+
+        <input type="text" id="nameInput" class="setup-input" placeholder="輸入名字 / พิมพ์ชื่อของคุณ">
+        <button class="setup-btn" onclick="saveProfile()">開啟悄悄話 🚀</button>
+    </div>
+</div>
+
+<div class="phone-container" id="phoneContainer">
     <div class="app-header">
         <div class="app-title-cn">💕 我們的專屬小窩</div>
         <div class="app-title-th">ห้องแชทส่วนตัวของเรา</div>
-        <button class="noti-btn" onclick="requestNotificationPermission()">開啟通知<br><span style="font-size:9px;">เปิดแจ้งเตือน</span></button>
+        <button class="noti-btn" onclick="requestNotificationPermission()">開啟通知<br><span style="font-size:8px;">เปิดแจ้งเตือน</span></button>
+        <button class="settings-btn" onclick="triggerBgUpload()">⚙️</button>
     </div>
 
     <div id="chat-window"></div>
@@ -228,7 +268,7 @@
 </div>
 
 <script>
-    // 1. 填入你的專屬 Firebase 配置
+    // 1. Firebase 配置
     const firebaseConfig = {
         apiKey: "AIzaSyADZjXliTZRKV3-3rGwviIcTFnvIFT6-jw",
         authDomain: "toey-97851.firebaseapp.com",
@@ -242,36 +282,93 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 詢問使用者是誰（中文和泰文提示）
-    const USER_NAME = prompt("請輸入你的名字 / กรุณาใส่ชื่อของคุณ (เช่น Kelvin / Toey) :") || "Guest";
+    // 讀取本地快取資料 (名字、頭像、背景)
+    let USER_NAME = localStorage.getItem('chat_user_name') || "";
+    let USER_AVATAR = localStorage.getItem('chat_user_avatar') || "https://cdn-icons-png.flaticon.com/512/3641/3641323.png";
+    let BG_DATA = localStorage.getItem('chat_bg_data') || "";
 
-    // 請求瀏覽器通知權限
+    // 初始化頁面背景
+    if (BG_DATA) {
+        document.getElementById('phoneContainer').style.backgroundImage = `url(${BG_DATA})`;
+    }
+
+    // 如果沒有名字，彈出唯美設定視窗
+    if (!USER_NAME) {
+        document.getElementById('setupModal').style.display = 'flex';
+    }
+
+    // 預覽選擇的頭像
+    function previewAvatar(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('avatarPreview').src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+
+    // 儲存個人檔案
+    function saveProfile() {
+        const name = document.getElementById('nameInput').value.trim();
+        if (!name) {
+            alert("請先輸入名字呀！ / กรุณาใส่ชื่อด้วยครับ");
+            return;
+        }
+        USER_NAME = name;
+        USER_AVATAR = document.getElementById('avatarPreview').src;
+        
+        localStorage.setItem('chat_user_name', USER_NAME);
+        localStorage.setItem('chat_user_avatar', USER_AVATAR);
+        
+        document.getElementById('setupModal').style.display = 'none';
+    }
+
+    // 觸發背景圖上傳
+    function triggerBgUpload() {
+        const action = confirm("💡 設定背景選項：\n【確定】：更換全新背景相片\n【取消】：還原預設粉紅色\n\n-------------------\nตั้งค่าพื้นหลัง:\n【ตกลง】: เปลี่ยนรูปพื้นหลังใหม่\n【ยกเลิก】: รีเซ็ตเป็นสีชมพู");
+        if (action) {
+            document.getElementById('bgInput').click();
+        } else {
+            localStorage.removeItem('chat_bg_data');
+            document.getElementById('phoneContainer').style.backgroundImage = 'none';
+        }
+    }
+
+    // 處理背景圖保存 (壓縮存入本地手機，防爆空間)
+    function handleBgUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64 = e.target.result;
+            localStorage.setItem('chat_bg_data', base64);
+            document.getElementById('phoneContainer').style.backgroundImage = `url(${base64})`;
+        }
+        reader.readAsDataURL(file);
+    }
+
+    // 請求通知權限
     function requestNotificationPermission() {
         if ("Notification" in window) {
             Notification.requestPermission().then(permission => {
                 if (permission === "granted") {
-                    alert("通知功能已成功開啟！ / เปิดการแจ้งเตือนสำเร็จแล้ว!");
+                    alert("通知功能已成功開啟！ / 開啟通知成功！");
                 }
             });
         }
     }
 
-    // 🔄 免登入、免 Key 的開源雙向翻譯邏輯 (使用 Lingva API)
+    // 🔄 免登入開源翻譯引擎 (Lingva API)
     async function doDualTranslation(text) {
-        // 判斷是否包含泰文字元
         const isThai = /[\u0E00-\u0E7F]/.test(text);
-        
-        // 如果是泰文，就翻成繁體中文；如果是中文，就翻成泰文
         const srcLang = isThai ? 'th' : 'zh';
         const targetLang = isThai ? 'zh' : 'th';
-
         try {
-            // 第一步：初次翻譯 (原文 -> 目標語)
             const res1 = await fetch(`https://lingva.ml/api/v1/${srcLang}/${targetLang}/${encodeURIComponent(text)}`);
             const data1 = await res1.json();
             const translatedText = data1.translation || "翻譯失敗 / แปลล้มเหลว";
 
-            // 第二步：反向翻譯 (目標語 -> 原文 用作驗證)
             const res2 = await fetch(`https://lingva.ml/api/v1/${targetLang}/${srcLang}/${encodeURIComponent(translatedText)}`);
             const data2 = await res2.json();
             const verifiedText = data2.translation || "無法驗證 / ไม่สามารถตรวจสอบได้";
@@ -283,46 +380,38 @@
         }
     }
 
-    // 處理媒體上傳 (轉成 Base64 字串存入數據庫，限制 2MB 內防免費空間塞爆)
+    // 處理媒體上傳
     function handleMediaUpload(input) {
         const file = input.files[0];
         if (!file) return;
-
         if (file.size > 2 * 1024 * 1024) { 
-            alert("為了維持免費空間，請選擇 2MB 以下的圖片/影片呀！\nกรุณาเลือกไฟล์ที่ต่ำกว่า 2MB ครับ");
+            alert("請選擇 2MB 以下的圖片/影片呀！\nกรุณาเลือกไฟล์ที่ต่ำกว่า 2MB ครับ");
             return;
         }
-
         const reader = new FileReader();
         reader.onload = function(e) {
-            const mediaData = e.target.result;
-            const fileType = file.type.startsWith('image') ? 'image' : 'video';
-            
             db.ref('messages').push({
                 sender: USER_NAME,
-                type: fileType,
-                mediaUrl: mediaData,
-                original: fileType === 'image' ? '[傳送了圖片 / ส่งรูปภาพ]' : '[傳送了影片 / ส่งวิดีโอ]',
-                translated: '',
-                verified: '',
+                avatar: USER_AVATAR, // 同步存入頭像
+                type: file.type.startsWith('image') ? 'image' : 'video',
+                mediaUrl: e.target.result,
+                original: file.type.startsWith('image') ? '[傳送了圖片 / ส่งรูปภาพ]' : '[傳送了影片 / ส่งวิดีโอ]',
                 timestamp: Date.now()
             });
         };
         reader.readAsDataURL(file);
     }
 
-    // 發送文字訊息
+    // 發送訊息
     async function handleSend() {
         const text = document.getElementById('userInput').value.trim();
         if (!text) return;
-
         document.getElementById('userInput').value = '';
         
-        // 執行雙向翻譯
         const result = await doDualTranslation(text);
-
         db.ref('messages').push({
             sender: USER_NAME,
+            avatar: USER_AVATAR, // 同步存入頭像
             type: 'text',
             original: text,
             translated: result.translated,
@@ -331,13 +420,9 @@
         });
     }
 
-    // 監聽新訊息並即時渲染
+    // 監聽並渲染訊息
     let isInitialLoad = true;
-    
-    // 先標記第一次載入，避免一開網頁就把舊訊息全部彈通知
-    db.ref('messages').limitToLast(1).once('value', () => {
-        isInitialLoad = false;
-    });
+    db.ref('messages').limitToLast(1).once('value', () => { isInitialLoad = false; });
 
     db.ref('messages').limitToLast(40).on('child_added', (snapshot) => {
         const msg = snapshot.val();
@@ -347,53 +432,50 @@
         const row = document.createElement('div');
         row.className = `msg-row ${isMe ? 'mine' : 'yours'}`;
 
-        // 顯示發送者名字
+        // 🟢 渲染頭像 (如果訊息沒存頭像，就用預設粉紅圖標)
+        const avatarImg = document.createElement('img');
+        avatarImg.className = 'avatar-img';
+        avatarImg.src = msg.avatar || "https://cdn-icons-png.flaticon.com/512/3641/3641323.png";
+        row.appendChild(avatarImg);
+
+        // 訊息文字與內容區
+        const contentArea = document.createElement('div');
+        contentArea.className = 'msg-content-area';
+
         const nameLabel = document.createElement('div');
         nameLabel.className = 'sender-name';
         nameLabel.innerText = msg.sender;
-        row.appendChild(nameLabel);
+        contentArea.appendChild(nameLabel);
 
         const bubble = document.createElement('div');
         bubble.className = 'msg-bubble';
 
         let contentHtml = '';
-        
-        // 判斷訊息類型並渲染
-        if (msg.type === 'image') {
-            contentHtml = `<img src="${msg.mediaUrl}" class="media-content" />`;
-        } else if (msg.type === 'video') {
-            contentHtml = `<video src="${msg.mediaUrl}" class="media-content" controls></video>`;
-        } else {
-            contentHtml = `<div>${msg.original}</div>`;
-        }
+        if (msg.type === 'image') contentHtml = `<img src="${msg.mediaUrl}" class="media-content" />`;
+        else if (msg.type === 'video') contentHtml = `<video src="${msg.mediaUrl}" class="media-content" controls></video>`;
+        else contentHtml = `<div>${msg.original}</div>`;
 
-        // 如果有翻譯內容，就加入雙語翻譯區塊
         if (msg.translated) {
             contentHtml += `
                 <div class="trans-block">
                     <strong>✨ 譯 / แปล:</strong> ${msg.translated}
-                    <span class="check-trans">🔄 反向驗證 / ตรวจสอบ: ${msg.verified}</span>
+                    <span class="check-trans">🔄 反向驗證: ${msg.verified}</span>
                 </div>
             `;
         }
 
         bubble.innerHTML = contentHtml;
-        row.appendChild(bubble);
+        contentArea.appendChild(bubble);
+        row.appendChild(contentArea);
         chatWindow.appendChild(row);
         
-        // 自動滾動到最底部
         chatWindow.scrollTop = chatWindow.scrollHeight;
 
-        // 彈出系統通知 (當對方發新訊息，且使用者不在這個分頁時)
         if (!isInitialLoad && !isMe && Notification.permission === "granted") {
-            new Notification(`💕 ${msg.sender} :`, {
-                body: msg.original,
-                icon: 'https://cdn-icons-png.flaticon.com/512/3641/3641323.png'
-            });
+            new Notification(`💕 ${msg.sender} :`, { body: msg.original });
         }
     });
 
-    // 支援 Enter 鍵發送
     document.getElementById('userInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') handleSend();
     });
