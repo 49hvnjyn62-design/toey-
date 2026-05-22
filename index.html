@@ -145,11 +145,9 @@
         }
 
         .media-content { max-width: 100%; border-radius: 12px; margin-bottom: 5px; display: block; }
-
         .trans-block { font-size: 0.85rem; margin-top: 6px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.4); }
         .yours .trans-block { border-top: 1px dashed #FFE4E9; color: #555555; }
         
-        /* 翻譯加載中的沙漏動畫效果 */
         .loading-trans { font-size: 0.75rem; opacity: 0.6; font-style: italic; margin-top: 4px; display: block; }
         .check-trans { font-size: 0.72rem; opacity: 0.75; margin-top: 4px; display: block; }
 
@@ -244,7 +242,7 @@
 
 <div class="phone-container" id="phoneContainer">
     <div class="app-header">
-        <div class="app-title-cn">💕 我們的專專屬小窩</div>
+        <div class="app-title-cn">💕 我們的專屬小窩</div>
         <div class="app-title-th">ห้องแชทส่วนตัวของเรา</div>
         <button class="noti-btn" onclick="requestNotificationPermission()">開啟通知<br><span style="font-size:8px;">เปิดแจ้งเตือน</span></button>
         <button class="settings-btn" onclick="triggerBgUpload()">⚙️</button>
@@ -296,6 +294,9 @@
         USER_AVATAR = document.getElementById('avatarPreview').src;
         localStorage.setItem('chat_user_name', USER_NAME);
         localStorage.setItem('chat_user_avatar', USER_AVATAR);
+        
+        // 🟢 特殊機制：告訴數據庫我更新了頭像紀錄，但不需要每條訊息重複傳相片
+        db.ref('users/' + USER_NAME).set({ avatar: USER_AVATAR });
         document.getElementById('setupModal').style.display = 'none';
     }
 
@@ -325,7 +326,6 @@
         }
     }
 
-    // 🔄 免登入開源翻譯引擎 (Lingva API)
     async function doDualTranslation(text) {
         const isThai = /[\u0E00-\u0E7F]/.test(text);
         const srcLang = isThai ? 'th' : 'zh';
@@ -352,7 +352,7 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             db.ref('messages').push({
-                sender: USER_NAME, avatar: USER_AVATAR,
+                sender: USER_NAME,
                 type: file.type.startsWith('image') ? 'image' : 'video',
                 mediaUrl: e.target.result,
                 original: file.type.startsWith('image') ? '[傳送了圖片 / ส่งรูปภาพ]' : '[傳送了影片 / ส่งวิดีโอ]',
@@ -362,27 +362,22 @@
         reader.readAsDataURL(file);
     }
 
-    // 🚀 優化核心：秒發送，後台異步追加翻譯
     async function handleSend() {
         const text = document.getElementById('userInput').value.trim();
         if (!text) return;
         document.getElementById('userInput').value = '';
         
-        // 1. 先用 0.01 秒推送到 Firebase（此時還沒有翻譯內容）
         const newMsgRef = db.ref('messages').push();
         newMsgRef.set({
             sender: USER_NAME,
-            avatar: USER_AVATAR,
             type: 'text',
             original: text,
-            translated: "loading", // 標記為加載中
+            translated: "loading",
             verified: "",
             timestamp: Date.now()
         });
 
-        // 2. 讓翻譯在背景慢慢跑，完全不卡住打字
         doDualTranslation(text).then((result) => {
-            // 3. 翻譯跑完後，自動回頭更新該條訊息的 Firebase 內容
             newMsgRef.update({
                 translated: result.translated,
                 verified: result.verified
@@ -391,18 +386,17 @@
     }
 
     let isInitialLoad = true;
+    // 🟢 弱網優化 1：限讀 15 條歷史訊息，開網頁下載數據體積縮小 3 倍！
     db.ref('messages').limitToLast(1).once('value', () => { isInitialLoad = false; });
 
-    db.ref('messages').limitToLast(40).on('child_added', (snapshot) => {
+    db.ref('messages').limitToLast(15).on('child_added', (snapshot) => {
         renderMessage(snapshot);
     });
 
-    // 監聽訊息被更新（當背景翻譯完成時會觸發這個）
-    db.ref('messages').limitToLast(40).on('child_changed', (snapshot) => {
+    db.ref('messages').limitToLast(15).on('child_changed', (snapshot) => {
         const key = snapshot.key;
         const oldBubble = document.getElementById(`msg-${key}`);
         if (oldBubble) {
-            // 局部重新渲染該條訊息的翻譯內容
             const msg = snapshot.val();
             const transBlock = oldBubble.querySelector('.trans-placeholder');
             if (transBlock && msg.translated !== "loading") {
@@ -416,13 +410,33 @@
         }
     });
 
+    // 🟢 弱網優化 2：動態快取與按需加載頭像
+    const avatarCache = {};
+    function loadAvatarAndRender(senderName, imgElement) {
+        // 如果是我自己，直接用本機頭像
+        if (senderName === USER_NAME) {
+            imgElement.src = USER_AVATAR;
+            return;
+        }
+        // 如果快取裡有對方的頭像，直接拿出來用（完全免動用網絡）
+        if (avatarCache[senderName]) {
+            imgElement.src = avatarCache[senderName];
+            return;
+        }
+        // 快取沒有，才去數據庫單獨拿那 1 次
+        db.ref('users/' + senderName + '/avatar').once('value', (snap) => {
+            const av = snap.val() || "https://cdn-icons-png.flaticon.com/512/3641/3641323.png";
+            avatarCache[senderName] = av;
+            imgElement.src = av;
+        });
+    }
+
     function renderMessage(snapshot) {
         const msg = snapshot.val();
         const key = snapshot.key;
         const chatWindow = document.getElementById('chat-window');
         const isMe = msg.sender === USER_NAME;
 
-        // 如果已經存在，不重複繪製
         if (document.getElementById(`msg-${key}`)) return;
 
         const row = document.createElement('div');
@@ -431,7 +445,8 @@
 
         const avatarImg = document.createElement('img');
         avatarImg.className = 'avatar-img';
-        avatarImg.src = msg.avatar || "https://cdn-icons-png.flaticon.com/512/3641/3641323.png";
+        avatarImg.src = "https://cdn-icons-png.flaticon.com/512/3641/3641323.png"; // 預設圖
+        loadAvatarAndRender(msg.sender, avatarImg); // 異步輕量加載頭像
         row.appendChild(avatarImg);
 
         const contentArea = document.createElement('div');
@@ -450,7 +465,6 @@
         else if (msg.type === 'video') contentHtml = `<video src="${msg.mediaUrl}" class="media-content" controls></video>`;
         else contentHtml = `<div>${msg.original}</div>`;
 
-        // 建立翻譯內容的預留錨點
         contentHtml += `<div class="trans-placeholder">`;
         if (msg.translated === "loading") {
             contentHtml += `<span class="loading-trans">⏳ 翻譯中... / แปลภาษาอยู่...</span>`;
